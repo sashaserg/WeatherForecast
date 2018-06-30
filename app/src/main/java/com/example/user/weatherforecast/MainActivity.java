@@ -14,6 +14,7 @@ import android.widget.Toast;
 import com.example.user.weatherforecast.adapter.WeatherAdapterToday;
 import com.example.user.weatherforecast.adapter.WeatherAdapterDaily;
 import com.example.user.weatherforecast.model.Forecast;
+import com.example.user.weatherforecast.model.PositionSettings;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.common.api.Status;
@@ -31,7 +32,7 @@ import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
 
-    SharedPreferences sharedPreferences;
+    PositionSettings positionSettings = PositionSettings.getSettings();
 
     WeatherApi.ApiInterface weatherApi;
     WeatherNotificator weatherNotificator;
@@ -102,8 +103,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        if (LoadPositionSetting())
+        if (positionSettings.isSettingsExist(this))
         {
+            curCityNameString = positionSettings.loadCityName(this);
+            lat = positionSettings.loadLatitude(this);
+            lon = positionSettings.loadLongitude(this);
             curCityName.setText(curCityNameString);
             updateWeather();
         }
@@ -158,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
 
                     weatherNotificator.createNotification(FORECAST_NOTIFICATION_ID, curCityNameString, data.getForecast().get(0).getTemperature());
 
-                    SavePositionSettings(curCityNameString, lat, lon);
+                    positionSettings.savePositionSettings(MainActivity.this, curCityNameString, lat, lon);
                 }
             }
             @Override
@@ -168,31 +172,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void SavePositionSettings(String cityName, double lat, double lon)
-    {
-        sharedPreferences = getSharedPreferences("MyPref", MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString("CityName", cityName);
-        editor.putFloat("Lat", (float)lat);
-        editor.putFloat("Lon", (float)lon);
-        editor.commit();
-        //Toast.makeText(this, "Settings Saved", Toast.LENGTH_LONG).show();
-    }
-    public boolean LoadPositionSetting()
-    {
-        sharedPreferences = getSharedPreferences("MyPref", MODE_PRIVATE);
-        String _cityName = sharedPreferences.getString("CityName", "");
-        Double _lat = (double)sharedPreferences.getFloat("Lat", 0);
-        Double _lon = (double)sharedPreferences.getFloat("Lon", 0);
 
-        if(_cityName != "" && _lat != 0 && _lon != 0) {
-            //Toast.makeText(this, "Settings Loaded Successfully", Toast.LENGTH_LONG).show();
-            curCityNameString = _cityName;
-            lat = _lat;
-            lon = _lon;
-            return true;
-        }
-        else return false;
-    }
+
 
 }
